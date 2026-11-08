@@ -49,7 +49,8 @@ if(page==='myposts'){
         c.appendChild(el('span','stt '+lb[1],lb[0]));c.appendChild(el('b',null,a.title||'Untitled'));
         var dt=new Date(a.updated_at);c.appendChild(el('small',null,(a.kind==='wiki'?'Law Wiki':'Magazine')+(isNaN(dt)?'':' · '+dt.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}))));
         if(a.status==='rejected'&&a.reject_reason)c.appendChild(el('div','why','Reason: '+a.reject_reason));
-        if(a.status==='pending')c.appendChild(el('p','hint','We aim to review within 48 hours. You will get a message in the app when it is decided.'));
+        if(a.status==='draft')c.appendChild(el('p','hint','Drafts are kept for 7 days from the last save, then deleted.'));
+        if(a.status==='pending')c.appendChild(el('p','hint','We aim to review within 48 hours. A post not reviewed within 7 days is declined and removed.'));
         if(a.status==='published'){var ln=el('a',null,'View on the site ↗');ln.href=base+'posts/'+slug(a)+'.html';ln.style.cssText='display:inline-block;margin-top:8px;color:var(--blue);font-weight:600';c.appendChild(ln)}
         ML.appendChild(c)})})}}
 }
@@ -105,14 +106,16 @@ if(page==='write'){
     if(words()<100){toast('A post needs at least 100 words. You have '+words()+'.',true);return false}
     if(!$('ecat').value){toast('Choose a category for your post.',true);return false}
     return true}
-  function payload(sub){return {kind:$('ekind').value,title:T.value.trim(),tags:tagList(),body:body(),submit:sub,accept:sub?true:undefined}}
+  var curId='';try{curId=localStorage.getItem('lcDraftId')||''}catch(e){}
+  function setId(v){curId=v||'';try{if(curId)localStorage.setItem('lcDraftId',curId);else localStorage.removeItem('lcDraftId')}catch(e){}}
+  function payload(sub){return {id:curId||undefined,kind:$('ekind').value,title:T.value.trim(),tags:tagList(),body:body(),submit:sub,accept:sub?true:undefined}}
   function done(sub){
-    if(sub){try{localStorage.removeItem('lcDraft')}catch(e){}
+    if(sub){try{localStorage.removeItem('lcDraft')}catch(e){}setId('');
       T.value='';TG.value='';E.innerHTML='';$('ecat').value='';$('etm').checked=false;count();
       info('Sent for review','Your post is with the Law Companion team. We aim to review within 48 hours. When it is gazetted you will get a message in the app with its link. You can follow its status under My posts.','See my posts',function(){location.href=base+'myposts.html'})}
-    else toast('Draft saved')}
+    else toast('Draft saved. Drafts are kept for 7 days.')}
   $('esave').onclick=function(){if(T.value.trim().length<1){toast('Add a title first.',true);return}
-    call('/wiki/save','POST',payload(false)).then(function(j){if(j.login||j._s===401){setTok('');toast('Please log in again.',true);setTimeout(function(){location.href=base+'login.html?next=write.html'},900);return}if(!j.ok){toast(j.error||'Could not save.',true);return}done(false)})};
+    call('/wiki/save','POST',payload(false)).then(function(j){if(j.login||j._s===401){setTok('');toast('Please log in again.',true);setTimeout(function(){location.href=base+'login.html?next=write.html'},900);return}if(!j.ok){toast(j.error||'Could not save.',true);return}if(j.id)setId(j.id);done(false)})};
   function fixBox(j){return new Promise(function(res){modal(function(b,close){
     b.appendChild(el('h3',null,'This post needs changes'));if(j.summary)b.appendChild(el('p',null,j.summary));
     (j.flags||[]).forEach(function(f){var d=el('div','fl'),h=el('b',null,f.type||'Issue');h.appendChild(el('em',null,f.kind==='fact'?'Fact check':f.kind==='platform'?'Platform':'Policy'));d.appendChild(h);
