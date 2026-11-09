@@ -66,9 +66,10 @@ if(page==='login'){
 }
 
 if(page==='write'){
-  var G=$('wGate'),BI=$('wBio'),ED=$('wEd');if(!G)return;
-  var tags=[];
-  var show=function(w){G.hidden=w!=='g';BI.hidden=w!=='b';ED.hidden=w!=='e'};
+  var G=$('wGate'),BI=$('wBio'),ED=$('wEd'),CL=$('wClosed');if(!G)return;
+  var tags=[],closed=false;
+  var show=function(w){if(closed)w='c';G.hidden=w!=='g';BI.hidden=w!=='b';ED.hidden=w!=='e';if(CL)CL.hidden=w!=='c'};
+  call('/wiki/status','GET').then(function(s){if(s&&s.open===false){closed=true;show('c')}}).catch(function(){});
   if(!tok()){show('g')}else{
     me().then(function(j){
       if(j.login||j._s===401){setTok('');show('g');return}
