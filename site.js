@@ -1,5 +1,5 @@
 (function(){
-var API='https://oetparthway--ece311aecdf411f1b8951607ee4eb77e.web.val.run';
+var API='https://lawzenite-api.oetparthway.workers.dev';
 function $(i){return document.getElementById(i)}
 function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
 function tok(){try{return localStorage.getItem('studentToken')||''}catch(e){return ''}}
